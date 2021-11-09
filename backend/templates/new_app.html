@@ -1,0 +1,10 @@
+{% load static %}
+{% load render_bundle from webpack_loader %}
+{% get_static_prefix as STATIC_URL %}
+{% get_media_prefix as MEDIA_URL %}
+{% block title %}New App{% endblock %}
+{% block content %}
+{{ data|json_script:"context" }}
+<div id="new-app"></div>
+{% render_bundle 'chunk-vendors' %} {% render_bundle 'new-app' %}
+{% endblock %}
