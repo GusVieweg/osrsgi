@@ -15,17 +15,24 @@ def item_lookup(request):
     j = json.loads(request.body)
     search = j['search']
     items = []
+    seen_item_names = []
     item_count = 0
     for item in all_items:
-        if search.upper() in item.name.upper() and not item.duplicate:
+        if (
+            search.upper() in item.name.upper()
+            and search.upper() not in seen_item_names
+            and not item.duplicate
+        ):
             items.append({
                 'name': item.name,
                 'id': item.id,
-                'icon_url': f'https://osrsbox.com/osrsbox-db/items-icons/{item.id}.png'
+                'icon_url': f'https://osrsbox.com/osrsbox-db/items-icons/{item.id}.png',
+                'duplicate': item.duplicate
             })
             item_count += 1
             if item_count >= 50:
                 break
+        seen_item_names.append(item.name.upper())
     
     print(all_items[0])
     return JsonResponse({'items': items})

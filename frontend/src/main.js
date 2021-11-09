@@ -5,6 +5,8 @@ import vuetify from "./plugins/vuetify"
 import axios from "axios"
 import _ from "lodash"
 
+import "@mdi/font/css/materialdesignicons.css"
+
 Vue.config.productionTip = false
 
 axios.defaults.xsrfCookieName = "csrftoken"
