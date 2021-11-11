@@ -25,7 +25,7 @@ FRONTEND_DIR = BASE_DIR / 'frontend'
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+SECRET_KEY = 'vhoef@=^)3=lfknj(_fwxpnv)5mxcd6nkxgpwtvs$j-ck%3ouf' #  os.getenv('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'webpack_loader',
-    'backend.djangoApp.apps.djangoAppConfig'
+    'backend.GIM.apps.GIMConfig'
 ]
 
 MIDDLEWARE = [
@@ -90,11 +90,14 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'dev',
+        'USER': 'gus',
+        'PASSWORD': 'Hufflepuffagus!',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators

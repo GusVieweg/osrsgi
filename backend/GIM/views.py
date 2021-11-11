@@ -22,6 +22,7 @@ def item_lookup(request):
             search.upper() in item.name.upper()
             and search.upper() not in seen_item_names
             and not item.duplicate
+            and item.tradeable
         ):
             items.append({
                 'name': item.name,
@@ -34,5 +35,4 @@ def item_lookup(request):
                 break
         seen_item_names.append(item.name.upper())
     
-    print(all_items[0])
     return JsonResponse({'items': items})

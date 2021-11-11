@@ -2,81 +2,103 @@
   <v-card>
     <v-card-text>
       <v-row>
-        <v-col cols="8">
+        <v-col cols="9">
           <v-autocomplete
             v-model="model"
             :items="items"
             :loading="isLoading"
             :search-input.sync="search"
-            color="white"
-            hide-no-data
-            hide-selected
+            light
             item-text="name"
             item-value="id"
             label="OSRS Items"
             placeholder="Start typing to Search"
             return-object
-          ></v-autocomplete>
+            chips
+            @change="itemSelected()"
+          >
+            <template v-slot:selection="data">
+              <v-chip v-bind="data.attrs">
+                <v-avatar left>
+                  <v-img :src="data.item.icon_url"></v-img>
+                </v-avatar>
+                {{ data.item.name }}
+              </v-chip>
+            </template>
+            <template v-slot:item="data">
+              <template>
+                <v-list-item-avatar>
+                  <img :src="data.item.icon_url" />
+                </v-list-item-avatar>
+                <v-list-item-content>
+                  <v-list-item-title
+                    v-html="data.item.name"
+                  ></v-list-item-title>
+                </v-list-item-content>
+              </template>
+            </template>
+          </v-autocomplete>
         </v-col>
-        <v-col cols="4">
-          <v-text-field label="Regular"></v-text-field>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="8">
-          <v-btn block dark color="green">Save</v-btn>
-        </v-col>
-        <v-col cols="4">
-          <v-btn block dark color="red">Delete</v-btn>
+        <v-col cols="3">
+          <v-text-field height="42px" label="Quantity"></v-text-field>
         </v-col>
       </v-row>
     </v-card-text>
+    <v-card-actions>
+      <v-btn text>Cancel</v-btn>
+      <v-spacer></v-spacer>
+      <v-btn color="primary" text @click="submit">Submit</v-btn>
+    </v-card-actions>
   </v-card>
 </template>
 
 <script>
-  export default {
-    data: () => ({
-      model: "",
-      isLoading: false,
-      search: "",
-      items: [],
-      timer: null,
-    }),
-    methods: {
-      debounce(func, timeout = 300) {
-        return (...args) => {
-          clearTimeout(this.timer);
-          this.timer = setTimeout(() => {
-            func.apply(this, args);
-          }, timeout);
-        };
-      },
-      lookupItem(val) {
-        this.$http
-          .post("djangoApp/item-lookup/", {
-            search: val,
-          })
-          .then(res => {
-            this.items = res.data.items;
-          })
-          .catch(err => {
-            console.log(err);
-          })
-          .finally(() => (this.isLoading = false));
-      },
+export default {
+  data: () => ({
+    model: "",
+    isLoading: false,
+    search: "",
+    items: [],
+    timer: null
+  }),
+  methods: {
+    itemSelected() {
+      this.search = "";
+      document.activeElement.blur();
     },
-    computed: {},
-    watch: {
-      search(val) {
-        if (!val) return;
-        if (this.isLoading) return;
-        if (val == this.model.name) return;
-
-        this.isLoading = true;
-
-        this.debounce(this.lookupItem(val), 500);
-      },
+    debounce(func, timeout = 300) {
+      return (...args) => {
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => {
+          func.apply(this, args);
+        }, timeout);
+      };
     },
-  };
+    lookupItem(val) {
+      this.$http
+        .post("/GIM/item-lookup/", {
+          search: val
+        })
+        .then(res => {
+          this.items = res.data.items;
+        })
+        .catch(err => {
+          console.log(err);
+        })
+        .finally(() => (this.isLoading = false));
+    }
+  },
+  computed: {},
+  watch: {
+    search(val) {
+      if (!val) return;
+      if (this.isLoading) return;
+      if (this.model && val == this.model.name) return;
+
+      this.isLoading = true;
+
+      this.debounce(this.lookupItem(val), 500);
+    }
+  }
+};
 </script>
