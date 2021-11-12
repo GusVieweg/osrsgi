@@ -10,68 +10,71 @@
       <v-row>
         <v-col cols="4">
           <p>Iron Flogan</p>
-          <v-row v-for="count in wantCount" :key="count">
+          <v-row>
             <v-col cols="12">
-              <ItemCard />
+              <ItemInput type="wants" />
             </v-col>
           </v-row>
           <v-row>
-            <v-col class="d-flex justify-center" cols="12">
-              <v-btn elevation="2" small fab dark color="green" @click="wantCount += 1">
-                <v-icon>mdi-plus</v-icon>
-              </v-btn>
+            <v-col cols="12">
+              <ItemDisplay type="wants" member="self" />
             </v-col>
           </v-row>
         </v-col>
-        <v-col cols="4">
-          <p>Iron Bebop</p>
-          <ItemCard />
-        </v-col>
-        <v-col cols="4">
-          <p>KindOfSpooky</p>
-          <ItemCard />
+        <v-col v-for="otherMember in otherMembers" :key="otherMember" cols="2">
+          <p>{{ otherMember }}</p>
+          <ItemDisplay type="wants" :member="otherMember" />
         </v-col>
       </v-row>
-      <h1>Got</h1>
+      <h1>Have</h1>
       <v-row>
         <v-col cols="4">
           <p>Iron Flogan</p>
-          <v-row v-for="count in gotCount" :key="count">
+          <v-row>
             <v-col cols="12">
-              <ItemCard />
+              <ItemInput type="haves" />
             </v-col>
           </v-row>
           <v-row>
-            <v-col class="d-flex justify-center" cols="12">
-              <v-btn elevation="2" small fab dark color="green" @click="gotCount += 1">
-                <v-icon>mdi-plus</v-icon>
-              </v-btn>
+            <v-col cols="12">
+              <ItemDisplay type="haves" member="self" />
             </v-col>
           </v-row>
         </v-col>
-        <v-col cols="4">
-          <p>Iron Bebop</p>
-          <ItemCard />
-        </v-col>
-        <v-col cols="4">
-          <p>KindOfSpooky</p>
-          <ItemCard />
+        <v-col v-for="otherMember in otherMembers" :key="otherMember" cols="2">
+          <p>{{ otherMember }}</p>
+          <ItemDisplay type="haves" :member="otherMember" />
         </v-col>
       </v-row>
     </v-container>
   </v-app>
 </template>
 <script>
-  import ItemCard from "@/components/ItemCard.vue";
+import ItemInput from "@/components/ItemInput.vue";
+import ItemDisplay from "@/components/ItemDisplay.vue";
 
-  export default {
-    data: () => ({
-      wantCount: 1,
-      gotCount: 1,
-    }),
-    methods: {},
-    components: {
-      ItemCard,
-    },
-  };
+export default {
+  data: () => ({
+    wantCount: 1,
+    gotCount: 1
+  }),
+  computed: {
+    otherMembers() {
+      console.log(this.$store.getters.otherMembers);
+      return this.$store.getters.otherMembers;
+    }
+  },
+  async mounted() {
+    let items = await this.$http.get("/GIM/get/");
+    console.log(items.data);
+    this.$store.commit("setItems", {
+      wants: items.data.wants,
+      haves: items.data.haves
+    });
+  },
+  components: {
+    ItemInput,
+    ItemDisplay
+  }
+};
 </script>

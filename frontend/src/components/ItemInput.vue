@@ -40,12 +40,15 @@
           </v-autocomplete>
         </v-col>
         <v-col cols="3">
-          <v-text-field height="42px" label="Quantity"></v-text-field>
+          <v-text-field
+            v-model="quantity"
+            height="42px"
+            label="Quantity"
+          ></v-text-field>
         </v-col>
       </v-row>
     </v-card-text>
     <v-card-actions>
-      <v-btn text>Cancel</v-btn>
       <v-spacer></v-spacer>
       <v-btn color="primary" text @click="submit">Submit</v-btn>
     </v-card-actions>
@@ -59,8 +62,10 @@ export default {
     isLoading: false,
     search: "",
     items: [],
-    timer: null
+    timer: null,
+    quantity: 0
   }),
+  props: ["type"],
   methods: {
     itemSelected() {
       this.search = "";
@@ -86,9 +91,29 @@ export default {
           console.log(err);
         })
         .finally(() => (this.isLoading = false));
+    },
+    submit() {
+      let action = "";
+      if (this.type == "wants") {
+        action = "ADD_WANT";
+      } else {
+        action = "ADD_HAVE";
+      }
+      this.$store.dispatch(action, {
+        item_id: this.model.id,
+        quantity: this.quantity,
+        icon_url: this.model.icon_url,
+        name: this.model.name
+      });
+      this.quantity = null;
+      this.model = null;
     }
   },
-  computed: {},
+  computed: {
+    currentMemberWants() {
+      return this.$store.state.currentMember.wants;
+    }
+  },
   watch: {
     search(val) {
       if (!val) return;

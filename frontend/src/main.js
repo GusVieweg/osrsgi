@@ -1,31 +1,33 @@
-import Vue from "vue"
-import App from "./App.vue"
-import NewApp from "./apps/NewApp.vue"
-import vuetify from "./plugins/vuetify"
-import axios from "axios"
-import _ from "lodash"
+import Vue from "vue";
+import App from "./App.vue";
+import NewApp from "./apps/NewApp.vue";
+import vuetify from "./plugins/vuetify";
+import axios from "axios";
+import _ from "lodash";
+import store from "@/store";
 
-import "@mdi/font/css/materialdesignicons.css"
+import "@mdi/font/css/materialdesignicons.css";
 
-Vue.config.productionTip = false
+Vue.config.productionTip = false;
 
-axios.defaults.xsrfCookieName = "csrftoken"
-axios.defaults.xsrfHeaderName = "X-CSRFTOKEN"
+axios.defaults.xsrfCookieName = "csrftoken";
+axios.defaults.xsrfHeaderName = "X-CSRFTOKEN";
 
 Vue.prototype.$http = axios.create({
-  baseURL: process.env.VUE_APP_HOST_URL,
-})
+  baseURL: process.env.VUE_APP_HOST_URL
+});
 
-Vue.prototype.$_ = _
+Vue.prototype.$_ = _;
 
 function deployVueApp(component, id) {
   if (document.getElementById(id)) {
     new Vue({
+      store,
       vuetify,
-      render: (h) => h(component),
-    }).$mount(`#${id}`)
+      render: h => h(component)
+    }).$mount(`#${id}`);
   }
 }
 
-deployVueApp(App, "app")
-deployVueApp(NewApp, "new-app")
+deployVueApp(App, "app");
+deployVueApp(NewApp, "new-app");
