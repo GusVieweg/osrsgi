@@ -6,10 +6,12 @@
     <!-- frontend/src/apps/Whatever.vue      -->
     <!-- for an example.                       -->
     <v-container>
+      <v-text-field v-model="newCurrentUser"></v-text-field>
+      <v-btn @click="setCurrentUser">Submit</v-btn>
       <h1>Want</h1>
       <v-row>
         <v-col cols="4">
-          <p>Iron Flogan</p>
+          <p>{{ currentUser }}</p>
           <v-row>
             <v-col cols="12">
               <ItemInput type="wants" />
@@ -17,11 +19,11 @@
           </v-row>
           <v-row>
             <v-col cols="12">
-              <ItemDisplay type="wants" member="self" />
+              <CurrentUserItemDisplay type="wants" />
             </v-col>
           </v-row>
         </v-col>
-        <v-col v-for="otherMember in otherMembers" :key="otherMember" cols="2">
+        <v-col v-for="otherMember in otherMembers" :key="otherMember" cols="4">
           <p>{{ otherMember }}</p>
           <ItemDisplay type="wants" :member="otherMember" />
         </v-col>
@@ -29,7 +31,7 @@
       <h1>Have</h1>
       <v-row>
         <v-col cols="4">
-          <p>Iron Flogan</p>
+          <p>{{ currentUser }}</p>
           <v-row>
             <v-col cols="12">
               <ItemInput type="haves" />
@@ -37,11 +39,11 @@
           </v-row>
           <v-row>
             <v-col cols="12">
-              <ItemDisplay type="haves" member="self" />
+              <CurrentUserItemDisplay type="haves" />
             </v-col>
           </v-row>
         </v-col>
-        <v-col v-for="otherMember in otherMembers" :key="otherMember" cols="2">
+        <v-col v-for="otherMember in otherMembers" :key="otherMember" cols="4">
           <p>{{ otherMember }}</p>
           <ItemDisplay type="haves" :member="otherMember" />
         </v-col>
@@ -52,27 +54,42 @@
 <script>
 import ItemInput from "@/components/ItemInput.vue";
 import ItemDisplay from "@/components/ItemDisplay.vue";
+import CurrentUserItemDisplay from "@/components/CurrentUserItemDisplay.vue";
 
 export default {
   data: () => ({
-    wantCount: 1,
-    gotCount: 1
+    newCurrentUser: ""
   }),
   computed: {
     otherMembers() {
-      console.log(this.$store.getters.otherMembers);
       return this.$store.getters.otherMembers;
+    },
+    currentUser() {
+      return this.$store.state.currentUser;
     }
   },
   async mounted() {
-    let items = await this.$http.get("/GIM/get/");
-    console.log(items.data);
+    let items = await this.$http.get(`/GIM/get/${this.currentUser}/`);
+    this.$store.commit("setMembers", items.data.members);
     this.$store.commit("setItems", {
       wants: items.data.wants,
       haves: items.data.haves
     });
   },
+  methods: {
+    async setCurrentUser() {
+      console.log(this.newCurrentUser);
+      this.$store.commit("setCurrentUser", this.newCurrentUser);
+      let items = await this.$http.get(`/GIM/get/${this.currentUser}/`);
+      this.$store.commit("setMembers", items.data.members);
+      this.$store.commit("setItems", {
+        wants: items.data.wants,
+        haves: items.data.haves
+      });
+    }
+  },
   components: {
+    CurrentUserItemDisplay,
     ItemInput,
     ItemDisplay
   }

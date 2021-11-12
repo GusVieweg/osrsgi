@@ -26,7 +26,7 @@
       <v-row>
         <v-col cols="12">
           <v-list v-if="items" subheader>
-            <v-subheader>{{ member }}'s {{ type }}</v-subheader>
+            <v-subheader>Your {{ type }}</v-subheader>
 
             <v-list-item v-for="item in items" :key="item.item_id">
               <v-list-item-avatar>
@@ -45,27 +45,36 @@
                     <v-btn
                       v-bind="attrs"
                       v-on="on"
-                      :color="'purple accent-4'"
+                      :color="'grey accent-4'"
                       text
                       icon
                     >
-                      <v-icon>
-                        {{
-                          type == "wants"
-                            ? "mdi-basket-fill"
-                            : "mdi-basket-unfill"
-                        }}
-                      </v-icon>
+                      <v-icon>mdi-pencil</v-icon>
                     </v-btn>
                   </template>
-                  <span v-if="type == 'haves'">Claim {{ item.name }}</span>
-                  <span v-else>Fulfill {{ item.name }}</span>
+                  <span>Edit</span>
+                </v-tooltip>
+              </v-list-item-icon>
+              <v-list-item-icon @click="remove(item)">
+                <v-tooltip top>
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                      v-bind="attrs"
+                      v-on="on"
+                      :color="'red accent-4'"
+                      text
+                      icon
+                    >
+                      <v-icon>mdi-delete</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Delete</span>
                 </v-tooltip>
               </v-list-item-icon>
             </v-list-item>
           </v-list>
           <v-list v-else subheader>
-            <v-subheader>{{ member }}'s {{ type }}</v-subheader>
+            <v-subheader>Your {{ type }}</v-subheader>
           </v-list>
         </v-col>
       </v-row>
@@ -80,16 +89,14 @@ export default {
     overlayItem: {},
     quantity: 0
   }),
-  props: ["member", "type"],
+  props: ["type"],
   methods: {
     updateQuantity() {
-      this.$store.dispatch("UPDATE_OTHER_QUANTITY", {
-        member: this.member,
+      this.$store.dispatch("UPDATE_QUANTITY", {
         type: this.type,
         item_id: this.overlayItem.item_id,
-        icon_url: this.overlayItem.icon_url,
-        name: this.overlayItem.name,
-        quantity: this.quantity
+        quantity: this.quantity,
+        member: this.currentUser
       });
       this.overlay = false;
     },
@@ -97,17 +104,29 @@ export default {
       this.quantity = item.quantity;
       this.overlayItem = item;
       this.overlay = true;
+    },
+    remove(item) {
+      this.$store.dispatch("REMOVE", {
+        type: this.type,
+        item_id: item.item_id,
+        member: this.currentUser,
+        quantity: item.quantity
+      });
     }
   },
   computed: {
     items() {
+      console.log(this.$store.state.members);
       if (Object.keys(this.$store.state.members).length) {
-        return this.$store.state.members[this.member][this.type];
+        return this.$store.getters.currentUserInfo[this.type];
       }
       return null;
     },
     minimumHeight() {
-      return "300px";
+      return "0px";
+    },
+    currentUser() {
+      return this.$store.state.currentUser;
     }
   }
 };

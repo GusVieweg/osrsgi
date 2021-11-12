@@ -11,91 +11,70 @@ Vue.use(Vuex);
 
 const store = new Vuex.Store({
   state: {
-    self: {
-      wants: [],
-      haves: []
-    },
-    otherMembers: {
-      KindOfSpooky: {
-        wants: [
-          {
-            item_id: 592,
-            quantity: "2000",
-            icon_url: "https://osrsbox.com/osrsbox-db/items-icons/592.png",
-            name: "Ashes"
-          }
-        ],
-        haves: [
-          {
-            item_id: 2150,
-            quantity: "50",
-            icon_url: "https://osrsbox.com/osrsbox-db/items-icons/2150.png",
-            name: "Swamp toad"
-          }
-        ]
-      },
-      "Iron Bebop": {
-        wants: [
-          {
-            item_id: 2150,
-            quantity: "50",
-            icon_url: "https://osrsbox.com/osrsbox-db/items-icons/2150.png",
-            name: "Swamp toad"
-          },
-          {
-            item_id: 592,
-            quantity: "2000",
-            icon_url: "https://osrsbox.com/osrsbox-db/items-icons/592.png",
-            name: "Ashes"
-          }
-        ]
-      }
-    }
+    currentUser: "gus",
+    members: {}
   },
   getters: {
     otherMembers: state => {
-      return Object.keys(state.otherMembers).sort();
+      let allMembers = Object.keys(state.members).sort();
+      return allMembers.filter(i => i !== state.currentUser);
+    },
+    currentUserInfo: state => {
+      return state.members[state.currentUser];
     }
   },
   mutations: {
+    setCurrentUser(state, user) {
+      state.currentUser = user;
+    },
+    setMembers(state, members) {
+      members.forEach(member => {
+        Vue.set(state.members, member, { wants: [], haves: [] });
+      });
+    },
     addWant(state, want) {
-      state.self.wants.push(want);
+      state.members[state.currentUser].wants.push(want);
     },
     addHave(state, have) {
-      state.self.haves.push(have);
+      state.members[state.currentUser].haves.push(have);
     },
     setItems(state, payload) {
-      state.self["wants"] = payload.wants;
-      state.self["haves"] = payload.haves;
+      payload.wants.forEach(want => {
+        state.members[want.username].wants.push(want);
+      });
+
+      payload.haves.forEach(have => {
+        state.members[have.username].haves.push(have);
+      });
     },
     removeItem(state, payload) {
-      let placeholder = state.self[payload.type];
-      state.self[payload.type] = [];
+      let placeholder = state.members[state.currentUser][payload.type];
+      state.members[state.currentUser][payload.type] = [];
       this.$_.remove(placeholder, {
-        item_id: payload.item_id,
-        quantity: payload.quantity
+        item_id: payload.item_id
       });
-      state.self[payload.type] = placeholder;
+      state.members[state.currentUser][payload.type] = placeholder;
     },
-    updateSelfQuantity(state, payload) {
-      let placeholder = state.self[payload.type];
-      state.self[payload.type] = [];
+    updateQuantity(state, payload) {
+      let placeholder = state.members[payload.member][payload.type];
+      state.members[payload.member][payload.type] = [];
       let item = this.$_.find(placeholder, {
-        item_id: payload.item_id,
-        quantity: payload.oldQuantity
+        item_id: payload.item_id
       });
-      item.quantity = payload.newQuantity;
-      state.self[payload.type] = placeholder;
+      if (item && payload.quantity > 0) {
+        item.quantity = payload.quantity;
+        state.members[payload.member][payload.type] = placeholder;
+      }
     },
-    updateOtherMemberQuantity(state, payload) {
-      let placeholder = state.otherMembers[payload.member][payload.type];
-      state.otherMembers[payload.member][payload.type] = [];
+    updateOtherQuantity(state, payload) {
+      let wh = payload[payload.type.substring(0, 4)][0];
+      let placeholder = state.members[payload.member][payload.type];
+      state.members[payload.member][payload.type] = [];
       let item = this.$_.find(placeholder, {
-        item_id: payload.item_id,
-        quantity: payload.oldQuantity
+        item_id: wh.item_id
       });
-      item.quantity = payload.newQuantity;
-      state.otherMembers[payload.member][payload.type] = placeholder;
+      item.quantity = wh.quantity;
+      state.members[payload.member][payload.type] = placeholder;
     }
   },
   actions: {
@@ -118,19 +97,42 @@ const store = new Vuex.Store({
       context.commit("addHave", have);
     },
     async REMOVE(context, payload) {
-      await this.$http.post(`/GIM/remove/${payload.type.substring(0, 4)}/`, {
+      let resp = await this.$http.post(`/GIM/remove/${payload.type}/`, {
         item_id: payload.item_id,
+        member: payload.member,
         quantity: payload.quantity
       });
-      context.commit("removeItem", payload);
+      if (resp.status == 200) {
+        context.commit("removeItem", payload);
+      }
     },
-    async UPDATE_SELF_QUANTITY(context, payload) {
-      await this.$http.post(`/GIM/update/${payload.type.substring(0, 4)}/`, {
+    async UPDATE_QUANTITY(context, payload) {
+      let resp = await this.$http.post(`/GIM/update/${payload.type}/`, {
         item_id: payload.item_id,
-        old_quantity: payload.oldQuantity,
-        new_quantity: payload.newQuantity
+        member: payload.member,
+        quantity: payload.quantity
       });
-      context.commit("updateSelfQuantity", payload);
+      if (resp.status == 200) {
+        context.commit("updateQuantity", payload);
+      }
+    },
+    async UPDATE_OTHER_QUANTITY(context, payload) {
+      let wh = await this.$http.post(`/GIM/transact/${payload.type}/`, {
+        member: payload.member,
+        icon_url: payload.icon_url,
+        item_id: payload.item_id,
+        name: payload.name,
+        quantity: parseInt(payload.quantity)
+      });
+      wh.data["member"] = payload.member;
+      wh.data["type"] = payload.type;
+      context.commit("updateOtherQuantity", wh.data);
+      console.log(wh.data);
+      context.commit("updateSelfQuantity", {
+        type: wh.data.type == "wants" ? "haves" : "wants",
+        item_id: payload.item_id,
+        quantity: wh.data[wh.data.type == "wants" ? "have" : "want"][0].quantity
+      });
     }
   }
 });
